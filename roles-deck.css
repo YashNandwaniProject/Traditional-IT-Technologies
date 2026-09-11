@@ -1,0 +1,824 @@
+/* ===========================================================================
+   2iresourcing — Key Roles in IT Infrastructure  ·  THE DECK
+
+   The second treatment of the same six roles, built to sit alongside the
+   sticky-console reel in photo.css so the two can be compared on one page.
+
+   Where the reel switches between six states, this one is scrubbed: a pinned
+   deck of photographic cards whose depth, lift and fade are driven straight
+   from scroll position, so the motion tracks the wheel rather than snapping
+   between steps. Each card carries the real photograph for that role, and
+   the copy wipes in behind a clip-path as the card reaches the front.
+
+   Everything is scoped to #roles-deck and cannot reach any other section.
+   Palette and type ramp come from the site tokens in 2ichanges.css.
+
+   Paired with roles-deck.js. Without JS the section degrades to a plain
+   stack of six readable cards — see the :not(.rd-ready) block at the foot.
+   =========================================================================== */
+
+/* ===========================================================================
+   SECTION SHELL + TOKENS
+   =========================================================================== */
+
+#roles-deck {
+  /* ground */
+  --paper: #f2f1ef;
+  --paper-2: #e8e7e5;
+  --card: #ffffff;
+
+  /* ink */
+  --ink: #111212;
+  --text: #1c1e1e;
+  --muted: #52504c;
+  --faint: #8b8985;
+
+  /* hairlines */
+  --line: rgba(17, 18, 18, 0.11);
+  --line-2: rgba(17, 18, 18, 0.06);
+
+  /* accent — the site orange */
+  --brand: #ffa004;
+  --brand-2: #fa8c16;
+  --brand-soft: rgba(255, 160, 4, 0.14);
+  --brand-ring: rgba(255, 160, 4, 0.28);
+
+  /* metrics — --shell matches the site container so the deck's head sits on
+     the same left edge as every other section. */
+  --shell: 1280px;
+  --pad: 15px;
+
+  /* the deck's scroll budget: one viewport to pin, then one step per card.
+     roles-deck.js reads the resulting run off the DOM, so changing --rd-step
+     here re-times the whole thing with nothing to update in the script. */
+  --rd-step: 66vh;
+  --rd-cards: 6;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.9, 0.24, 1);
+  --spring: cubic-bezier(0.34, 1.36, 0.5, 1);
+
+  position: relative;
+  isolation: isolate;
+  background: var(--paper);
+  padding: var(--_letter-spacing---section-gap, 100px) 0;
+  font-family: Archivo, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 16px;
+  /* The site sets body { line-height: 20px } — absolute, and inherited. */
+  line-height: 1.6;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  scroll-margin-top: 40px;
+}
+
+#roles-deck::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+      120% 55% at 50% 0%,
+      rgba(255, 255, 255, 0.26),
+      rgba(255, 255, 255, 0) 62%
+    ),
+    radial-gradient(
+      90% 45% at 50% 100%,
+      rgba(232, 231, 229, 0.28),
+      rgba(232, 231, 229, 0) 72%
+    );
+}
+
+#roles-deck ::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+#roles-deck :focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+#roles-deck * {
+  box-sizing: border-box;
+}
+
+/* The site styles bare p / h2 / h3 / ul / li / button globally, at an element
+   specificity that would otherwise beat every class in this file. Neutralise
+   them once; the classes below carry the real values. */
+#roles-deck h2,
+#roles-deck h3,
+#roles-deck p,
+#roles-deck ol,
+#roles-deck ul,
+#roles-deck li,
+#roles-deck span,
+#roles-deck b,
+#roles-deck i,
+#roles-deck figure,
+#roles-deck figcaption,
+#roles-deck button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  margin: 0;
+  padding: 0;
+}
+
+#roles-deck img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ===========================================================================
+   SECTION HEAD
+   =========================================================================== */
+
+#roles-deck .rd-head {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 var(--pad) clamp(26px, 3.2vw, 44px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: clamp(18px, 4vw, 60px);
+  align-items: end;
+  border-bottom: 1px solid var(--line);
+}
+
+#roles-deck .rd-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 20px;
+  padding: 8px 16px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+#roles-deck .rd-label i {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+  animation: rd-pulse 2.8s ease-in-out infinite;
+}
+@keyframes rd-pulse {
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 160, 4, 0.04);
+  }
+}
+
+/* Section headings elsewhere on the page run in the brand blue at -0.07em;
+   this one was the only one still in ink at -0.038em, which made the deck
+   read as a different product. The clamp stays — it is the responsive part. */
+#roles-deck .rd-head h2 {
+  max-width: 15ch;
+  font-family: "Schibsted Grotesk", Archivo, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  font-size: clamp(32px, 4.4vw, 54px);
+  line-height: 1.06;
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  color: #374696;
+}
+
+#roles-deck .rd-head > p {
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.62;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  max-width: 44ch;
+}
+
+/* Word-by-word rise, wired up by roles-deck.js. */
+#roles-deck [data-rd-split] .w {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.42em);
+}
+#roles-deck .rd-reveal.in [data-rd-split] .w {
+  animation: rd-word 0.78s var(--ease) forwards;
+  animation-delay: calc(var(--w, 0) * 44ms);
+}
+@keyframes rd-word {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 860px) {
+  #roles-deck .rd-head {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+  }
+  #roles-deck .rd-head h2 {
+    max-width: 18ch;
+  }
+}
+
+/* ===========================================================================
+   THE STAGE
+
+   The stage is the scroll runway. The pin inside it is one viewport tall and
+   sticks, so the distance the stage can travel while pinned — its height
+   minus one viewport — is exactly the budget the script divides between the
+   six cards.
+   =========================================================================== */
+
+#roles-deck .rd-stage {
+  position: relative;
+  height: calc(100vh + var(--rd-cards) * var(--rd-step));
+}
+
+#roles-deck .rd-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.4vw, 30px);
+  padding: clamp(20px, 3vh, 44px) var(--pad) clamp(18px, 2.6vh, 34px);
+  overflow: hidden;
+}
+
+/* ---------- the deck ---------- */
+
+#roles-deck .rd-deck {
+  position: relative;
+  width: 100%;
+  max-width: 1180px;
+  height: min(72vh, 610px);
+  margin: 0 auto;
+  /* Real depth: the waiting cards are pushed back in Z and the perspective
+     does the scaling, so the stack reads as physical rather than as six
+     rectangles at different sizes. */
+  perspective: 1600px;
+  perspective-origin: 50% 42%;
+}
+
+#roles-deck .rd-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  /* The photographs are 600x400. A narrower media panel would crop them to a
+     tall portrait and blow them up to fill it; a little over half the card
+     keeps the panel close to square, which is a gentle crop off a 3:2 frame
+     and barely any upscale across the width. */
+  grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 2px 4px -2px rgba(16, 16, 19, 0.16),
+    0 44px 80px -46px rgba(16, 16, 19, 0.55);
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* The veil is painted in the section's own ground colour, so a card waiting
+   its turn recedes into the page instead of just going translucent. */
+#roles-deck .rd-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--paper);
+}
+
+/* ---------- the photograph ---------- */
+
+#roles-deck .rd-media {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+#roles-deck .rd-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Keeps heads out of the top crop on a near-square panel. */
+  object-position: 50% 42%;
+  transform-origin: 50% 50%;
+  /* roles-deck.js drives this: a slow, scroll-linked push in as the card
+     advances through the deck. */
+  will-change: transform;
+}
+/* Warms the photograph towards the brand and keeps the glass tag legible
+   over whatever happens to be in the frame. */
+#roles-deck .rd-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+      160deg,
+      rgba(255, 160, 4, 0.16),
+      rgba(17, 18, 18, 0) 46%
+    ),
+    linear-gradient(
+      to top,
+      rgba(17, 18, 18, 0.62),
+      rgba(17, 18, 18, 0.06) 42%,
+      rgba(17, 18, 18, 0) 62%
+    );
+}
+
+#roles-deck .rd-tag {
+  position: absolute;
+  left: clamp(14px, 1.6vw, 22px);
+  bottom: clamp(14px, 1.6vw, 22px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(17, 18, 18, 0.42);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  font-size: clamp(10px, 0.86vw, 12px);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+#roles-deck .rd-tag i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: #5cc9a0;
+  box-shadow: 0 0 0 3px rgba(92, 201, 160, 0.25);
+}
+
+/* ---------- the copy ---------- */
+
+#roles-deck .rd-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(26px, 3.2vw, 54px);
+}
+
+/* Oversized numeral sitting in the paper behind the copy. */
+#roles-deck .rd-ghost {
+  position: absolute;
+  right: clamp(-8px, -0.4vw, 0px);
+  bottom: clamp(-26px, -2.2vw, -10px);
+  z-index: 0;
+  font-family: "Schibsted Grotesk", Archivo, sans-serif;
+  font-size: clamp(120px, 15vw, 230px);
+  font-weight: 600;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: rgba(17, 18, 18, 0.045);
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#roles-deck .rd-body > *:not(.rd-ghost) {
+  position: relative;
+  z-index: 1;
+}
+
+#roles-deck .rd-no {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: clamp(14px, 1.6vw, 22px);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+#roles-deck .rd-no b {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+#roles-deck .rd-no span {
+  color: var(--faint);
+}
+#roles-deck .rd-no::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  margin-left: 4px;
+  background: linear-gradient(90deg, var(--line), rgba(17, 18, 18, 0));
+  transform: translateY(-4px);
+}
+
+#roles-deck .rd-title {
+  font-family: "Schibsted Grotesk", Archivo, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  font-size: clamp(28px, 3.3vw, 46px);
+  line-height: 1.05;
+  font-weight: 500;
+  letter-spacing: -0.038em;
+  color: var(--ink);
+}
+
+#roles-deck .rd-def {
+  margin-top: clamp(14px, 1.5vw, 20px);
+  padding-left: 16px;
+  border-left: 3px solid var(--brand);
+  font-size: clamp(15px, 1.35vw, 18.5px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+#roles-deck .rd-copy {
+  margin-top: clamp(14px, 1.5vw, 20px);
+  max-width: 44ch;
+  font-size: clamp(14.5px, 1.05vw, 16.5px);
+  line-height: 1.68;
+  letter-spacing: -0.008em;
+  color: var(--muted);
+}
+
+#roles-deck .rd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: clamp(18px, 2vw, 28px);
+  list-style: none;
+}
+#roles-deck .rd-chips li {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  transition: transform 0.32s var(--spring), border-color 0.24s ease,
+    background-color 0.24s ease, box-shadow 0.24s ease;
+}
+#roles-deck .rd-card.is-live .rd-chips li:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  box-shadow: 0 8px 20px -14px rgba(250, 140, 22, 0.9);
+}
+
+/* ---------- the copy reveal ----------
+
+   Each element wipes up from behind a clip-path as its card reaches the
+   front, staggered down the card. This is the part the reel does not have:
+   the content is re-dealt every time a card comes forward. */
+
+#roles-deck .rd-title,
+#roles-deck .rd-def,
+#roles-deck .rd-copy,
+#roles-deck .rd-no,
+#roles-deck .rd-chips li {
+  opacity: 0;
+  transform: translateY(18px);
+  clip-path: inset(0 0 100% 0);
+}
+#roles-deck .rd-card.is-shown .rd-title,
+#roles-deck .rd-card.is-shown .rd-def,
+#roles-deck .rd-card.is-shown .rd-copy,
+#roles-deck .rd-card.is-shown .rd-no,
+#roles-deck .rd-card.is-shown .rd-chips li {
+  opacity: 1;
+  transform: none;
+  /* -1% keeps descenders and the accent rule from being shaved by the mask. */
+  clip-path: inset(-1% -1% -1% -1%);
+  transition: opacity 0.62s var(--ease) var(--d, 0s),
+    transform 0.72s var(--ease) var(--d, 0s),
+    clip-path 0.72s var(--ease) var(--d, 0s);
+}
+#roles-deck .rd-card.is-shown .rd-no { --d: 0.02s; }
+#roles-deck .rd-card.is-shown .rd-title { --d: 0.08s; }
+#roles-deck .rd-card.is-shown .rd-def { --d: 0.17s; }
+#roles-deck .rd-card.is-shown .rd-copy { --d: 0.25s; }
+#roles-deck .rd-card.is-shown .rd-chips li:nth-child(1) { --d: 0.33s; }
+#roles-deck .rd-card.is-shown .rd-chips li:nth-child(2) { --d: 0.38s; }
+#roles-deck .rd-card.is-shown .rd-chips li:nth-child(3) { --d: 0.43s; }
+#roles-deck .rd-card.is-shown .rd-chips li:nth-child(4) { --d: 0.48s; }
+
+/* Chips need their transition back for hover once they have landed. */
+#roles-deck .rd-card.is-live .rd-chips li:hover {
+  transition: transform 0.32s var(--spring), border-color 0.24s ease,
+    background-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+/* ===========================================================================
+   THE RAIL — segmented progress, one segment per role
+   =========================================================================== */
+
+#roles-deck .rd-rail {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 28px);
+}
+
+#roles-deck .rd-seg {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+  list-style: none;
+}
+#roles-deck .rd-seg li {
+  flex: 1;
+  min-width: 0;
+}
+#roles-deck .rd-seg button {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 26px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+/* The track and the fill are drawn on the button so the hit area stays a
+   comfortable 26px while the bar itself reads as a 3px hairline. */
+#roles-deck .rd-seg button::before,
+#roles-deck .rd-seg button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 999px;
+}
+#roles-deck .rd-seg button::before {
+  width: 100%;
+  background: rgba(17, 18, 18, 0.13);
+}
+#roles-deck .rd-seg button::after {
+  width: var(--fill, 0%);
+  background: linear-gradient(90deg, var(--brand-2), var(--brand));
+}
+#roles-deck .rd-seg button:hover::before {
+  background: rgba(17, 18, 18, 0.26);
+}
+
+#roles-deck .rd-now {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: min(38vw, 260px);
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--muted);
+}
+#roles-deck .rd-now b {
+  font-weight: 600;
+  color: var(--brand-2);
+  font-variant-numeric: tabular-nums;
+}
+#roles-deck .rd-now span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: opacity 0.24s var(--ease);
+}
+#roles-deck .rd-now.swap span,
+#roles-deck .rd-now.swap b {
+  opacity: 0;
+}
+
+/* ===========================================================================
+   STACKED LAYOUT
+
+   Under 900px the card becomes the photograph, with the copy laid over a
+   scrim at its foot. That keeps every card exactly one viewport-safe height
+   whatever the copy length, which a two-column split cannot promise on a
+   narrow screen.
+   =========================================================================== */
+
+@media (max-width: 900px) {
+  #roles-deck {
+    --rd-step: 62vh;
+  }
+  #roles-deck .rd-deck {
+    height: min(74vh, 560px);
+    perspective: 1100px;
+  }
+  #roles-deck .rd-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  #roles-deck .rd-media,
+  #roles-deck .rd-body {
+    grid-area: 1 / 1;
+  }
+  #roles-deck .rd-media::after {
+    background: linear-gradient(
+      160deg,
+      rgba(255, 160, 4, 0.14),
+      rgba(17, 18, 18, 0) 40%
+    ),
+    linear-gradient(
+      to top,
+      rgba(10, 10, 12, 0.94) 26%,
+      rgba(10, 10, 12, 0.72) 48%,
+      rgba(10, 10, 12, 0.12) 78%
+    );
+  }
+  #roles-deck .rd-body {
+    justify-content: flex-end;
+    padding: clamp(20px, 5vw, 32px);
+    color: #fff;
+  }
+  #roles-deck .rd-ghost {
+    color: rgba(255, 255, 255, 0.09);
+    bottom: auto;
+    top: clamp(-14px, -2vw, -6px);
+    right: clamp(6px, 2vw, 18px);
+    font-size: clamp(90px, 26vw, 150px);
+  }
+  #roles-deck .rd-no b {
+    color: #fff;
+  }
+  #roles-deck .rd-no span {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  #roles-deck .rd-no::after {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0)
+    );
+  }
+  #roles-deck .rd-title {
+    color: #fff;
+  }
+  #roles-deck .rd-def {
+    color: rgba(255, 255, 255, 0.94);
+  }
+  /* The long paragraph is the one thing that will not always fit; clamp it
+     rather than let a card overflow its own frame. */
+  #roles-deck .rd-copy {
+    color: rgba(255, 255, 255, 0.74);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #roles-deck .rd-chips li {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  #roles-deck .rd-tag {
+    top: clamp(14px, 3vw, 20px);
+    bottom: auto;
+  }
+  #roles-deck .rd-now {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Let the card take more of a phone screen — the extra height is what
+     buys the third line of copy back. */
+  #roles-deck .rd-deck {
+    height: min(78vh, 620px);
+  }
+  #roles-deck .rd-chips {
+    margin-top: 16px;
+  }
+}
+
+/* ===========================================================================
+   NO-JS / PRE-BOOT FALLBACK
+
+   roles-deck.js adds .rd-ready as soon as it takes over. Until then — and
+   permanently, if the script never loads — the stage stops being a runway
+   and the six cards simply stack down the page, fully legible.
+   =========================================================================== */
+
+#roles-deck:not(.rd-ready) .rd-reveal,
+#roles-deck:not(.rd-ready) [data-rd-split] .w {
+  opacity: 1;
+  transform: none;
+}
+#roles-deck:not(.rd-ready) .rd-stage {
+  height: auto;
+}
+#roles-deck:not(.rd-ready) .rd-pin {
+  position: static;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+#roles-deck:not(.rd-ready) .rd-deck {
+  height: auto;
+  max-width: 1180px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  perspective: none;
+}
+#roles-deck:not(.rd-ready) .rd-card {
+  position: relative;
+  inset: auto;
+  height: min(72vh, 610px);
+}
+#roles-deck:not(.rd-ready) .rd-veil {
+  display: none;
+}
+#roles-deck:not(.rd-ready) .rd-title,
+#roles-deck:not(.rd-ready) .rd-def,
+#roles-deck:not(.rd-ready) .rd-copy,
+#roles-deck:not(.rd-ready) .rd-no,
+#roles-deck:not(.rd-ready) .rd-chips li {
+  opacity: 1;
+  transform: none;
+  clip-path: none;
+}
+#roles-deck:not(.rd-ready) .rd-rail {
+  display: none;
+}
+
+/* ===========================================================================
+   REDUCED MOTION
+
+   The deck still advances with scroll — that is the navigation, not the
+   decoration — but the depth, the push-in on the photographs and the wipe
+   are all dropped in favour of a plain cross-fade.
+   =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  #roles-deck [data-rd-split] .w {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+  #roles-deck .rd-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  #roles-deck .rd-label i {
+    animation: none;
+  }
+  #roles-deck .rd-title,
+  #roles-deck .rd-def,
+  #roles-deck .rd-copy,
+  #roles-deck .rd-no,
+  #roles-deck .rd-chips li {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    transition: none;
+  }
+  #roles-deck .rd-chips li:hover {
+    transform: none;
+  }
+}
+
+#roles-deck .rd-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+#roles-deck .rd-reveal.in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.78s var(--ease), transform 0.88s var(--ease);
+}
